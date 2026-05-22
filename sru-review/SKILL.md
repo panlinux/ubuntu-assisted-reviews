@@ -28,6 +28,10 @@ The resulting checkout contains tags of the form `queue/<release>/unapproved/<ha
 
 - Open `debian/changelog`. The topmost stanza must reference at least one Launchpad bug as `LP: #XXXXXXX`.
 - Verify every referenced bug is **public** (reachable at `https://bugs.launchpad.net/bugs/XXXXXXX` without authentication).
+- Locate the `source.changes` file in the Launchpad unapproved queue at:
+  `https://launchpad.net/ubuntu/<release>/+queue?queue_state=1`
+  (replace `<release>` with the target Ubuntu release name, e.g. `noble`).
+  Find the relevant upload in the queue and download the `.changes` file from there.
 - Confirm the `source.changes` file also lists the same bug numbers.
 
 ### 3. Check changes quality
