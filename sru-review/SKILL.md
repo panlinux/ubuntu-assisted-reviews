@@ -11,10 +11,29 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 
 - `git-ubuntu` must be available (install via snap if missing).
 - `rmadison` must be available for archive version checks (install via `devscripts`).
+- `distro-info` must be available to determine which Ubuntu releases are still supported (install via the `distro-info` package).
 
 ## Workflow
 
-### 1. Fetch the upload
+### 1. Determine supported Ubuntu releases
+
+Before evaluating the upload, establish which Ubuntu releases are still
+supported. This list determines for which releases the SRU is required and
+which releases must be checked for the presence of the fix.
+
+```bash
+# List all supported releases (includes the development release)
+ubuntu-distro-info --supported
+
+# Identify the current development release
+ubuntu-distro-info --devel
+```
+
+Keep this list handy — it is used in later steps (see "Verify upstream /
+archive alignment") to scope which releases are relevant when confirming the
+fix is present in later supported releases and in the current devel release.
+
+### 2. Fetch the upload
 
 ```bash
 git ubuntu clone <source-package>
@@ -24,13 +43,13 @@ git ubuntu queue sync
 
 The resulting checkout contains tags of the form `queue/<release>/unapproved/<hash>`.
 
-### 2. Verify bug references
+### 3. Verify bug references
 
 - Open `debian/changelog`. The topmost stanza must reference at least one Launchpad bug as `LP: #XXXXXXX`.
 - Verify every referenced bug is **public** (reachable at `https://bugs.launchpad.net/bugs/XXXXXXX` without authentication).
 - Confirm the `source.changes` file also lists the same bug numbers.
 
-### 3. Check changes quality
+### 4. Check changes quality
 
 - The overall change should be **minimal** and focused on fixing the reported bug(s).
 - No unrelated changes are present in the diff.
@@ -38,7 +57,7 @@ The resulting checkout contains tags of the form `queue/<release>/unapproved/<ha
 - Package version follows SRU convention (`<oldversion>+esm*` or `<release><number>.<oldversion>`).
 - No dependency on another SRU that must land simultaneously.
 
-### 4. Verify upstream / archive alignment
+### 5. Verify upstream / archive alignment
 
 ```bash
 rmadison -a source <package>
@@ -51,14 +70,14 @@ rmadison -a source <package>
 - The fix is present in the **current devel release**.
 - If a new upstream version is included, confirm `uscan` works and the tarball is verifiable.
 
-### 5. Review packaging specifics
+### 6. Review packaging specifics
 
 - The maintainer in `debian/control` needs to have an `ubuntu.com` email address.
 - Check `debian/control` for **NEW packages**; if any exist, this requires an AA/SRU combined review per [non-standard SRU processes](https://documentation.ubuntu.com/sru/en/latest/explanation/non-standard-processes/#new-queue-in-the-sru-context).
 - Verify no changes affect translations.
 - If the bug claims a **package-specific procedure**, consult [package-specific SRU instructions](https://documentation.ubuntu.com/sru/en/latest/reference/package-specific/).
 
-### 6. Validate bug & test plan
+### 7. Validate bug & test plan
 
 - On Launchpad, the bug has **Ubuntu release tasks** for every target release.
 - The **SRU template** is completely and correctly filled in on each bug.
@@ -66,12 +85,12 @@ rmadison -a source <package>
 - The test plan tells a coherent **user story**.
 - If the bug involves the **kernel**, both **GA and HWE kernels** must be included in the test plan.
 
-### 7. Check phasing status
+### 8. Check phasing status
 
 - Visit <https://ubuntu-archive-team.ubuntu.com/phased-updates.html>.
 - If phasing was halted due to errors, confirm the changes in this upload address the failure.
 
-### 8. Sanitize the report
+### 9. Sanitize the report
 
 Before saving or emitting the final report, remove all personally-identifying information (PII). Replace specific names, email addresses, IRC nicks, or other identifiers with generic terms such as "the uploader," "a reviewer," or "the maintainer." Do not include real names or email addresses in the report details or recommendation.
 
