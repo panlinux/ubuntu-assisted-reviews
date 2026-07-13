@@ -12,6 +12,20 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 - `git-ubuntu` must be available (install via snap if missing).
 - `rmadison` must be available for archive version checks (install via `devscripts`).
 
+## Fetching web resources
+
+Several URLs encountered during review redirect across domains (e.g. `launchpad.net` → `launchpadlibrarian.net`, `ubuntu-archive-team.ubuntu.com` → `phased-updates.ubuntu.com`). The `web_fetch` tool refuses cross-domain redirects, so always use **`curl -sL`** instead for any URL on these domains:
+
+- `launchpad.net` / `launchpadlibrarian.net`
+- `ubuntu.com` / `ubuntu-archive-team.ubuntu.com` / `phased-updates.ubuntu.com`
+- `canonical.com`
+
+```bash
+curl -sL "<url>"
+```
+
+If you receive an HTTP 5xx error, **retry up to 3 times** before treating it as a failure.
+
 ## Workflow
 
 ### 1. Fetch the upload
@@ -68,7 +82,7 @@ rmadison -a source <package>
 
 ### 7. Check phasing status
 
-- Visit <https://ubuntu-archive-team.ubuntu.com/phased-updates.html>.
+- Visit <https://phased-updates.ubuntu.com/>.
 - If phasing was halted due to errors, confirm the changes in this upload address the failure.
 
 ### 8. Sanitize the report
