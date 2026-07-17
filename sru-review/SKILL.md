@@ -85,7 +85,7 @@ rmadison -a source <package>
 - In the git-ubuntu repository, each Ubuntu release is represented by a tag of the form `pkg/ubuntu/<release>-devel`.
 - For each relevant release, compare its changelog/diff against this SRU to confirm the same fix (or an equivalent/superseding fix) is present.
 - The fix is present in all **later supported releases**.
-- The fix is present in the **current devel release**.
+- The fix is present in the **current devel release**. The fix being available in `devel-proposed` (the `-proposed` pocket of the development release) is sufficient to satisfy this criterion. If it has not yet migrated to the release pocket, note this in the final report (see the Details section of the report template).
 - If a new upstream version is included, confirm `uscan` works and the tarball is verifiable.
 
 ### 6. Review packaging specifics
@@ -143,7 +143,7 @@ After completing the steps above, write the report to a file named `sru-review-<
 | 7 | Correct versioning | ✅ PASS / ❌ FAIL / — N/A |
 | 8 | No co-dependent SRU | ✅ PASS / ❌ FAIL / — N/A |
 | 9 | Fix in later releases | ✅ PASS / ❌ FAIL / — N/A |
-| 10 | Fix in devel release | ✅ PASS / ❌ FAIL / — N/A |
+| 10 | Fix in devel release | ✅ PASS / ⚠️ PASS (devel-proposed) / ❌ FAIL / — N/A |
 | 11 | New upstream / uscan | ✅ PASS / ❌ FAIL / — N/A |
 | 12 | Package-specific procedure | ✅ PASS / ❌ FAIL / — N/A |
 | 13 | NEW packages in control | ✅ PASS / ❌ FAIL / — N/A |
@@ -159,7 +159,12 @@ After completing the steps above, write the report to a file named `sru-review-<
 ## Details
 
 <!-- For every FAIL or NEEDS-INFO, add a ### heading per check with a concise explanation.
-     If all checks pass, write: "All checks passed. No issues identified." -->
+     If all checks pass, write: "All checks passed. No issues identified."
+     If the fix satisfies check 10 only via devel-proposed (i.e. it is present in the
+     development release's -proposed pocket but has not yet migrated to the release pocket),
+     mark check 10 as "⚠️ PASS (devel-proposed)" in the Checks table above, and
+     add a note here stating that the fix in the development release is still pending migration
+     from -proposed. -->
 
 ## Recommendation
 
