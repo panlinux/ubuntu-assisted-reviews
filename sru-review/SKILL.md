@@ -21,7 +21,16 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 This skill ships helper scripts in the `scripts/` directory next to this file.
 They exist to do the mechanical, error-prone parts of the review the same way
 every time. **Prefer the script over reconstructing the commands yourself.** Run
-each script with no arguments (or the wrong ones) to see its usage. Every script
+each script with no arguments (or the wrong ones) to see its usage.
+
+**Always run the scripts shipped with this skill.** The `scripts/` prefix used
+throughout this document refers to this skill's own directory. Set a variable to
+it once and invoke every helper through it:
+
+```bash
+SRU_SCRIPTS="<base directory of this skill>/scripts"   # from the skill context
+"$SRU_SCRIPTS/gather-context.sh"
+``` Every script
 prints `KEY=value` lines or a small table that later steps consume. If a script
 fails, it prints a message on stderr and exits non-zero — fall back to the
 manual steps documented alongside each check.
