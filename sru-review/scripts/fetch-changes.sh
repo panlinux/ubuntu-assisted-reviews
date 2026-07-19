@@ -8,9 +8,13 @@
 # referenced in debian/changelog also appear in the .changes file (report
 # check 3).
 #
-# If [version] is given, only the upload matching that exact version is
-# selected; otherwise every matching source upload found in the queue is
-# reported (there is normally only one).
+# Uses the Launchpad API's distro_series.getPackageUploads() operation
+# (exact_match=true, status=Unapproved) to look up the upload.
+#
+# If [version] is given, only the upload matching that exact version (as
+# returned by the API, including any epoch) is selected; otherwise every
+# matching source upload found in the queue is reported (there is normally
+# only one).
 #
 # On success: exit 0, having printed one or more blocks of the form
 #     CHANGES_FILE=<local path>
@@ -26,16 +30,12 @@ set -euo pipefail
 die() { echo "fetch-changes: $*" >&2; exit 1; }
 
 [ $# -ge 2 ] || die "usage: fetch-changes.sh <release> <package> [version]"
+command -v jq >/dev/null 2>&1 || die "jq not found"
 release=$1
 package=$2
 want_version=${3:-}
-# .changes filenames carry the epoch-stripped version (e.g. "28.0.0-0ubuntu1.1",
-# never "2:28.0.0-0ubuntu1.1"), so drop a leading "<epoch>:" from the requested
-# version before matching. This lets callers pass the version verbatim from
-# gather-context.sh / dpkg-parsechangelog, which includes the epoch.
-want_version=${want_version#*:}
 
-queue_url="https://launchpad.net/ubuntu/${release}/+queue?queue_state=1&queue_text=${package}"
+api_url="https://api.launchpad.net/devel/ubuntu/${release}?ws.op=getPackageUploads&status=Unapproved&name=${package}&exact_match=true"
 
 # Retry transient 5xx errors up to 3 times.
 fetch() {
@@ -51,37 +51,25 @@ fetch() {
     return 1
 }
 
-page=$(fetch "$queue_url") || die "could not fetch queue page: $queue_url"
+json=$(fetch "$api_url") || die "could not query Launchpad API: $api_url"
 
-# Extract all *_source.changes URLs for this release's upload queue.
-mapfile -t urls < <(printf '%s' "$page" \
-    | grep -oE "https://launchpad.net/ubuntu/${release}/\\+upload/[0-9]+/\\+files/[^\"']*_source\\.changes" \
-    | sort -u)
+# Only source uploads have a .changes file; contains_source filters out
+# binary-only/copy entries.
+mapfile -t rows < <(printf '%s' "$json" \
+    | jq -r '.entries[] | select(.contains_source) | [.package_version, .changes_file_url] | @tsv')
 
-[ ${#urls[@]} -gt 0 ] || die "no source .changes upload found for '${package}' in ${release} unapproved queue"
+[ ${#rows[@]} -gt 0 ] || die "no source .changes upload found for '${package}' in ${release} unapproved queue"
 
 tmpdir=$(mktemp -d)
 found=0
-for url in "${urls[@]}"; do
-    fname=${url##*/}
-    # Filenames look like: <src>_<version>_source.changes. Neither a Debian
-    # source name nor a version may contain '_', so the first '_' separates
-    # them unambiguously.
-    base=${fname%_source.changes}
-    src=${base%%_*}
-    version=${base#*_}
-
-    # The queue page is filtered by a substring of the package name, so it can
-    # also list uploads whose source merely contains <package> (e.g. "gcc" vs
-    # "gcc-defaults"). Only accept an exact source match.
-    if [ "$src" != "$package" ]; then
-        continue
-    fi
+for row in "${rows[@]}"; do
+    IFS=$'\t' read -r version url <<<"$row"
 
     if [ -n "$want_version" ] && [ "$version" != "$want_version" ]; then
         continue
     fi
 
+    fname=${url##*/}
     out="${tmpdir}/${fname}"
     fetch "$url" "$out" || die "failed to download changes file: $url"
 
