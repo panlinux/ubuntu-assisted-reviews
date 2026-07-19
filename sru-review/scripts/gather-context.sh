@@ -13,7 +13,7 @@
 #     TARGET_SERIES=<distribution/series the upload targets, e.g. noble>
 #     URGENCY=<urgency>
 #     LP_BUGS=<space separated LP bug numbers referenced in the top stanza>
-#     QUEUE_TAGS=<matching queue/<release>/unapproved/<hash> tags, if any>
+#     QUEUE_TAGS=<queue/<release>/unapproved/<hash> tag pointing at HEAD>
 #     BASELINE_REF=<git ref to diff the queue tag against, if resolvable>
 #
 # BASELINE_REF is the release baseline the upload should be compared against
@@ -21,8 +21,8 @@
 # a real object in this repo, so Stage B can diff reliably:
 #     git diff "$BASELINE_REF" "$QUEUE_TAGS"
 #
-# On failure (not a checkout, no changelog): exit non-zero with a message on
-# stderr.
+# On failure (not a checkout, no changelog, or HEAD does not identify exactly
+# one queue tag): exit non-zero with a message on stderr.
 set -euo pipefail
 
 die() { echo "gather-context: $*" >&2; exit 1; }
@@ -46,11 +46,16 @@ bugs=$(dpkg-parsechangelog -S Changes 2>/dev/null \
     | grep -oE '[0-9]+' || true)
 bugs=$(printf '%s\n' $bugs | sort -un | xargs || true)
 
-# Queue tags present in this checkout, if run inside a git repo.
+# Identify the single queue upload checked out at HEAD.
 qtags=""
 baseline=""
 if git rev-parse --git-dir >/dev/null 2>&1; then
-    qtags=$(git tag -l 'queue/*/unapproved/*' | xargs || true)
+    mapfile -t head_qtags < <(git tag --points-at HEAD -l 'queue/*/unapproved/*')
+    case ${#head_qtags[@]} in
+        0) die "HEAD is not tagged as queue/<release>/unapproved/<hash>" ;;
+        1) qtags=${head_qtags[0]} ;;
+        *) die "HEAD has multiple unapproved queue tags: ${head_qtags[*]}" ;;
+    esac
 
     # Resolve the release baseline to diff the upload against. Try the
     # conventional git-ubuntu refs in order and keep the first that exists as a

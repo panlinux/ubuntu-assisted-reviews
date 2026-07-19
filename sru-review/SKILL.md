@@ -149,10 +149,11 @@ From inside the checkout (with the queue tag checked out, per A2):
 ```
 
 Record the printed `SOURCE`, `VERSION`, `TARGET_SERIES`, `LP_BUGS`,
-`QUEUE_TAGS`, and `BASELINE_REF` (the ref Stage B diffs against, normally
-`pkg/ubuntu/<series>-devel`; emitted only when it resolves in the checkout).
-These feed nearly every later check. **Expected outcome:** a single top
-changelog stanza referencing at least one `LP: #NNNN` bug.
+`QUEUE_TAGS` (the single queue tag pointing at `HEAD`), and `BASELINE_REF` (the
+ref Stage B diffs against, normally `pkg/ubuntu/<series>-devel`; emitted only
+when it resolves in the checkout). These feed nearly every later check.
+**Expected outcome:** a single top changelog stanza referencing at least one
+`LP: #NNNN` bug.
 - **Check 1 (bug references in changelog):** PASS if `LP_BUGS` is non-empty;
   FAIL if the topmost stanza references no Launchpad bug.
 
