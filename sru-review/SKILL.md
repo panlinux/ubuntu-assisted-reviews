@@ -16,6 +16,11 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 - `lynx` must be available (used by `phasing-status.sh` to render the phased
   updates table to text).
 
+Run `"$SRU_SCRIPTS/check-env.sh"` (see **Helper scripts** below for
+`$SRU_SCRIPTS`) at the start of a review to confirm all of the above are
+installed; it prints an install hint for anything missing and exits non-zero
+if the environment is incomplete.
+
 ### Helper scripts
 
 This skill ships helper scripts in the `scripts/` directory next to this file
@@ -34,6 +39,7 @@ alongside the affected check.
 
 | Script | Purpose | Feeds checks |
 |--------|---------|--------------|
+| `check-env.sh` | Preflight: verify every required external tool is installed; print install hints for missing ones | (prerequisites) |
 | `gather-context.sh [dir]` | Print source, version, target series, referenced LP bugs, queue tags, and the diff `BASELINE_REF` from the checkout | 1, 3, 4, 7 |
 | `fetch-changes.sh <release> <package> [version]` | Download the `.changes` file from the unapproved queue and print its `Launchpad-Bugs-Fixed` | 3 |
 | `rmadison-matrix.sh <package>` | Per-release version matrix limited to supported + devel releases (header also prints the supported/devel list) | 9, 10 |
@@ -128,7 +134,7 @@ dpkg-parsechangelog -S Distribution                # sanity check: NOT unstable/
 From inside the checkout (with the queue tag checked out, per A2):
 
 ```bash
-scripts/gather-context.sh
+"$SRU_SCRIPTS/gather-context.sh"
 ```
 
 Record the printed `SOURCE`, `VERSION`, `TARGET_SERIES`, `LP_BUGS`,
@@ -146,7 +152,7 @@ above.
 #### A4. Fetch the `.changes` file
 
 ```bash
-scripts/fetch-changes.sh "<TARGET_SERIES>" "<SOURCE>" "<VERSION>"
+"$SRU_SCRIPTS/fetch-changes.sh" "<TARGET_SERIES>" "<SOURCE>" "<VERSION>"
 ```
 
 Record `CHANGES_FILE` and `LAUNCHPAD_BUGS_FIXED`.
@@ -207,7 +213,7 @@ All of these checks are answered from the checkout alone.
 Confirm the fix has landed everywhere it must. Build the version matrix once:
 
 ```bash
-scripts/rmadison-matrix.sh "<SOURCE>"
+"$SRU_SCRIPTS/rmadison-matrix.sh" "<SOURCE>"
 ```
 
 For each relevant release, confirm the same fix (or an equivalent/superseding
@@ -234,8 +240,8 @@ Query every referenced bug once for its status and tasks, and fetch its full
 description (SRU template) via the Launchpad API in the same batch:
 
 ```bash
-scripts/bug-info.sh <LP_BUGS>
-scripts/bug-description.sh <LP_BUGS>
+"$SRU_SCRIPTS/bug-info.sh" <LP_BUGS>
+"$SRU_SCRIPTS/bug-description.sh" <LP_BUGS>
 ```
 
 Use `bug-description.sh` output for the template/test-plan checks below — it
@@ -270,7 +276,7 @@ comments or attachments not in the description.)
 
 ### Stage E — Archive automation
 
-- **Check 21 (phasing errors addressed):** Run `scripts/phasing-status.sh
+- **Check 21 (phasing errors addressed):** Run `"$SRU_SCRIPTS/phasing-status.sh"
   <SOURCE>`. `PHASING=none` → not phasing, **N/A**. `PHASING=ok` → phasing
   normally, **N/A** (note it is in progress). `PHASING=halted` → phasing stopped
   (0%): inspect the matching rows and PASS only if this upload addresses the
@@ -288,60 +294,21 @@ or recommendation.
 
 ## Report template
 
-After completing the steps above, write the report to a file named `sru-review-<package>-lp<bug>.md` (use the primary bug number from the changelog) and emit it as a **Markdown** document using the following structure. The check numbers below are stable and map to the Stage steps above.
+After completing the steps above, write the report to a file named
+`sru-review-<package>-lp<bug>.md` (use the primary bug number from the
+changelog) and emit it as a **Markdown** document.
 
-```markdown
-# SRU Review Report
+The report skeleton lives in [`report-template.md`](report-template.md) next to
+this file. Read it once you reach this stage and fill it in: replace the
+`<...>` placeholders, set each check to `✅ PASS` / `❌ FAIL` / `— N/A`, and
+follow the HTML-comment instructions in the Details and Recommendation
+sections. The check numbers in the template are stable and map to the Stage
+steps above.
 
-| Field | Value |
-|-------|-------|
-| **Package** | `<source-package>` |
-| **Tag(s)** | `<queue-tag(s)>` |
-| **Reviewer** | <your identifier> |
-| **Date** | <YYYY-MM-DD> |
+Load the template like any other helper artifact:
 
-## Summary
-
-**APPROVE / REJECT / NEEDS-INFO** — <one-line verdict>
-
-## Checks
-
-| # | Check | Result |
-|---|-------|--------|
-| 1 | Bug references in changelog | ✅ PASS / ❌ FAIL / — N/A |
-| 2 | Bugs publicly accessible | ✅ PASS / ❌ FAIL / — N/A |
-| 3 | Bug references in source.changes | ✅ PASS / ❌ FAIL / — N/A |
-| 4 | Minimal change | ✅ PASS / ❌ FAIL / — N/A |
-| 5 | No unrelated changes | ✅ PASS / ❌ FAIL / — N/A |
-| 6 | DEP-3 patch format | ✅ PASS / ❌ FAIL / — N/A |
-| 7 | Correct versioning | ✅ PASS / ❌ FAIL / — N/A |
-| 8 | No co-dependent SRU | ✅ PASS / ❌ FAIL / — N/A |
-| 9 | Fix in later releases | ✅ PASS / ❌ FAIL / — N/A |
-| 10 | Fix in devel release | ✅ PASS / ❌ FAIL / — N/A |
-| 11 | New upstream / uscan | ✅ PASS / ❌ FAIL / — N/A |
-| 12 | Package-specific procedure | ✅ PASS / ❌ FAIL / — N/A |
-| 13 | NEW packages in control | ✅ PASS / ❌ FAIL / — N/A |
-| 14 | Maintainer has ubuntu.com email | ✅ PASS / ❌ FAIL / — N/A |
-| 15 | No translation changes | ✅ PASS / ❌ FAIL / — N/A |
-| 16 | Correct release tasks | ✅ PASS / ❌ FAIL / — N/A |
-| 17 | SRU template filled | ✅ PASS / ❌ FAIL / — N/A |
-| 18 | Kernel GA & HWE in plan | ✅ PASS / ❌ FAIL / — N/A |
-| 19 | Test plan covers usage | ✅ PASS / ❌ FAIL / — N/A |
-| 20 | Good user story in plan | ✅ PASS / ❌ FAIL / — N/A |
-| 21 | Phasing errors addressed | ✅ PASS / ❌ FAIL / — N/A |
-
-## Details
-
-<!-- For every FAIL or NEEDS-INFO, add a ### heading per check with a concise explanation.
-     If all checks pass, write: "All checks passed. No issues identified." -->
-
-## Recommendation
-
-### ✅ APPROVE / ❌ REJECT / ℹ️ NEEDS-INFO
-
-<!-- If APPROVE: one-line confirmation. -->
-<!-- If REJECT: state the blocking issue(s) and what the uploader must fix. -->
-<!-- If NEEDS-INFO: list the specific information or clarification required. -->
+```bash
+cat "$SRU_SCRIPTS/../report-template.md"
 ```
 
 Stop after emitting the report.
