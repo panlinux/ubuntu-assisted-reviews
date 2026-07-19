@@ -38,14 +38,12 @@ version=$(dpkg-parsechangelog -S Version)
 series=$(dpkg-parsechangelog -S Distribution)
 urgency=$(dpkg-parsechangelog -S Urgency 2>/dev/null || echo "unknown")
 
-# Referenced LP bugs: dpkg-parsechangelog exposes them via -S Closes for
-# "LP: #NNNN" and "Closes: NNNN" style entries; fall back to scraping the raw
-# top stanza for "LP: #NNNN" just in case.
-bugs=$(dpkg-parsechangelog -S Closes 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' || true)
-if [ -z "$bugs" ]; then
-    bugs=$(dpkg-parsechangelog -S Changes 2>/dev/null \
-        | grep -oiE 'LP: *#[0-9]+' | grep -oE '[0-9]+' || true)
-fi
+# Extract only explicit Launchpad references from the top stanza. The
+# dpkg-parsechangelog Closes field is for Debian bugs and must not satisfy the
+# SRU requirement for an LP bug.
+bugs=$(dpkg-parsechangelog -S Changes 2>/dev/null \
+    | grep -oiE 'LP: *#[0-9]+( *, *#[0-9]+)*' \
+    | grep -oE '[0-9]+' || true)
 bugs=$(printf '%s\n' $bugs | sort -un | xargs || true)
 
 # Queue tags present in this checkout, if run inside a git repo.
