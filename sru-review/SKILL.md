@@ -28,10 +28,19 @@ manual steps documented alongside each check.
 
 | Script | Purpose | Feeds checks |
 |--------|---------|--------------|
-| `gather-context.sh [dir]` | Print source, version, target series, referenced LP bugs, and queue tags from the checkout | 1, 3, 4, 7 |
+| `gather-context.sh [dir]` | Print source, version, target series, referenced LP bugs, queue tags, and the diff `BASELINE_REF` from the checkout | 1, 3, 4, 7 |
 | `fetch-changes.sh <release> <package> [version]` | Download the `.changes` file from the unapproved queue and print its `Launchpad-Bugs-Fixed` | 3 |
-| `rmadison-matrix.sh <package>` | Per-release version matrix limited to supported + devel releases | 9, 10 |
+| `rmadison-matrix.sh <package>` | Per-release version matrix limited to supported + devel releases (header also prints the supported/devel list) | 9, 10 |
 | `bug-info.sh <bug> [<bug>...]` | Launchpad API: public flag + per-series task status for each bug | 2, 16 (corroborates 9, 10) |
+| `bug-description.sh <bug> [<bug>...]` | Launchpad API: full bug description / SRU template text (avoids scraping truncated bug HTML) | 17, 19, 20 |
+| `phasing-status.sh <package>` | Classify phased-updates.ubuntu.com status as `none`/`ok`/`halted` for the package | 21 |
+
+**Batch the independent data-gathering scripts.** The scripts above have no
+data dependencies on each other once `SOURCE`/`VERSION`/`TARGET_SERIES`/`LP_BUGS`
+are known (from `gather-context.sh`). Issue `fetch-changes.sh`,
+`rmadison-matrix.sh`, `bug-info.sh`, `bug-description.sh`, and
+`phasing-status.sh` **in a single batched turn** rather than one at a time —
+each writes independent `KEY=value` / block output that later checks consume.
 
 ## Fetching web resources
 
@@ -70,7 +79,11 @@ ubuntu-distro-info --supported   # supported releases, includes devel
 ubuntu-distro-info --devel       # the current development release
 ```
 
-This list scopes the cross-release checks in Stage C.
+This list scopes the cross-release checks in Stage C. **Optional / often
+redundant:** `rmadison-matrix.sh` (Stage C) already prints the supported list
+and the devel release in its header (`# Supported releases:` / `# Devel
+release:`), so if you are running that script anyway you can read the list from
+there instead of invoking `distro-info` separately.
 
 #### A2. Fetch the upload
 
