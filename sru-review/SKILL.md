@@ -10,7 +10,6 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 ## Prerequisites
 
 - `git-ubuntu` must be available (install via snap if missing).
-- `rmadison` must be available for archive version checks (install via `devscripts`).
 - `distro-info` must be available to determine which Ubuntu releases are still supported (install via the `distro-info` package).
 - `jq` and `curl` must be available (used by the helper scripts).
 - `lynx` must be available (used by `phasing-status.sh` to render the phased

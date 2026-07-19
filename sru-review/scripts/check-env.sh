@@ -19,7 +19,6 @@ set -uo pipefail
 # tool -> human-readable install hint
 tools=(
     "git-ubuntu:snap install git-ubuntu --classic"
-    "rmadison:apt install devscripts"
     "ubuntu-distro-info:apt install distro-info"
     "dpkg-parsechangelog:apt install dpkg-dev"
     "jq:apt install jq"
