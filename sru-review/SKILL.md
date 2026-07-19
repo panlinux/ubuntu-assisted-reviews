@@ -184,7 +184,10 @@ answered from the checkout alone.
 - **Check 4 (minimal change):** PASS if the diff is minimal and focused on the
   reported bug(s); FAIL if it contains substantial unrelated work.
 - **Check 5 (no unrelated changes):** PASS if every hunk maps to a bug fix
-  named in the changelog; FAIL if unrelated files/lines are touched.
+  named in the changelog; FAIL if unrelated files/lines are touched. Expected
+  Ubuntu packaging deltas — notably the `Maintainer`/`XSBC-Original-Maintainer`
+  update from `update-maintainer` (Check 14) — are fine and need not be
+  mentioned in the changelog, though there is no harm if they are.
 - **Check 6 (DEP-3 patch format):** For every *new* file under `debian/patches/`,
   PASS if it carries DEP-3 headers (`Description`, `Origin`/`Author`, `Bug`,
   etc.); FAIL if a new patch lacks them. N/A if no new patches are added.
