@@ -106,11 +106,18 @@ From inside the checkout:
 scripts/gather-context.sh
 ```
 
-Record the printed `SOURCE`, `VERSION`, `TARGET_SERIES`, `LP_BUGS`, and
-`QUEUE_TAGS`. These feed nearly every later check. **Expected outcome:** a
-single top changelog stanza that references at least one `LP: #NNNN` bug.
+Record the printed `SOURCE`, `VERSION`, `TARGET_SERIES`, `LP_BUGS`,
+`QUEUE_TAGS`, and `BASELINE_REF`. These feed nearly every later check.
+`BASELINE_REF` is the git ref (normally `pkg/ubuntu/<series>-devel`) that Stage
+B diffs the upload against; the script emits it only when it resolves to a real
+object in the checkout. **Expected outcome:** a single top changelog stanza
+that references at least one `LP: #NNNN` bug.
 - **Check 1 (bug references in changelog):** PASS if `LP_BUGS` is non-empty;
   FAIL if the topmost stanza references no Launchpad bug.
+
+Then kick off the independent data-gathering scripts (A4 and Stages C/D/E) in a
+single batched turn — see **Batch the independent data-gathering scripts**
+above.
 
 #### A4. Fetch the `.changes` file
 
@@ -129,9 +136,18 @@ Record `CHANGES_FILE` and `LAUNCHPAD_BUGS_FIXED`.
 
 ### Stage B — Local checkout / diff checks
 
-Inspect the upload diff (`git ubuntu` checkout; compare the queue tag against
-the release tag `pkg/ubuntu/<TARGET_SERIES>-devel`). All of these are answered
-from the checkout alone.
+Inspect the upload diff (`git ubuntu` checkout). Diff the queue tag against the
+`BASELINE_REF` emitted by `gather-context.sh` (normally
+`pkg/ubuntu/<TARGET_SERIES>-devel`):
+
+```bash
+git --no-pager diff "$BASELINE_REF" "$QUEUE_TAGS"
+```
+
+If `gather-context.sh` printed an empty `BASELINE_REF`, the conventional ref did
+not resolve in this checkout — fetch/verify it (e.g. `git rev-parse --verify
+pkg/ubuntu/<TARGET_SERIES>-devel`) before diffing. All of these checks are
+answered from the checkout alone.
 
 #### B1. Changes quality
 - **Check 4 (minimal change):** PASS if the diff is minimal and focused on the
