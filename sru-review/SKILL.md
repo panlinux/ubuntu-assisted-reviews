@@ -188,23 +188,31 @@ evidence), but still confirm against the actual change where practical.
 
 ### Stage D — Launchpad bug / test-plan checks
 
-Query every referenced bug once:
+Query every referenced bug once for its status and tasks, and fetch its full
+description (SRU template) via the Launchpad API in the same batch:
 
 ```bash
 scripts/bug-info.sh <LP_BUGS>
+scripts/bug-description.sh <LP_BUGS>
 ```
 
-Then read each bug's SRU template and test plan in the browser via `curl -sL`.
+Use `bug-description.sh` output for the template/test-plan checks below — it
+returns the complete `[Impact]` / `[Test Plan]` / `[Where problems could occur]`
+text from the API. Do **not** scrape the bug's HTML page for this: the HTML
+`<meta description>` is truncated and will force a redundant second fetch. (You
+may still open the bug in the browser via `curl -sL` to read reviewer comments
+or attachments not in the description.)
 
 - **Check 2 (bugs publicly accessible):** PASS if `bug-info.sh` reports
   `PRIVATE=false` for every bug; FAIL if any bug is private or unreachable.
 - **Check 16 (correct release tasks):** PASS if each bug has an Ubuntu series
   task for **every target release** of this SRU (visible in the `TASK` rows);
   FAIL if a target release task is missing.
-- **Check 17 (SRU template filled):** Read the description of each bug. PASS if
-  the SRU template ([Impact], [Test Plan], [Where problems could occur],
-  [Regression potential]) is completely and correctly filled in and not blocked
-  by an unanswered reviewer question; FAIL if incomplete or unresolved.
+- **Check 17 (SRU template filled):** Read the description of each bug from
+  `bug-description.sh`. PASS if the SRU template ([Impact], [Test Plan], [Where
+  problems could occur], [Regression potential]) is completely and correctly
+  filled in and not blocked by an unanswered reviewer question; FAIL if
+  incomplete or unresolved.
 - **Check 18 (kernel GA & HWE in plan):** If the package is a **kernel**, PASS
   only if both GA and HWE kernels are covered by the test plan; FAIL otherwise.
   N/A for non-kernel packages.
