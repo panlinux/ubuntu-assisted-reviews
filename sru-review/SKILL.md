@@ -80,6 +80,17 @@ numbering is stable — only the order of work differs.
 
 ### Stage A — Setup & context
 
+#### A0. Preflight: check the environment
+
+Confirm every external tool the skill relies on is installed before starting.
+
+```bash
+"$SRU_SCRIPTS/check-env.sh"
+```
+
+If it reports any `MISSING` tool (exit non-zero), install the missing packages
+using the printed hints — or alert the user — before continuing.
+
 #### A1. Determine supported Ubuntu releases
 
 Establish which releases are still supported (and which is the development

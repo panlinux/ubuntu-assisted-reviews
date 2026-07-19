@@ -1,3 +1,3 @@
 apt update
-apt install devscripts distro-info jq curl -y
+apt install devscripts distro-info jq curl lynx -y
 snap install --classic git-ubuntu

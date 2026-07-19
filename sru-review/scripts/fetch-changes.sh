@@ -64,9 +64,19 @@ tmpdir=$(mktemp -d)
 found=0
 for url in "${urls[@]}"; do
     fname=${url##*/}
-    # Filenames look like: <src>_<version>_source.changes
+    # Filenames look like: <src>_<version>_source.changes. Neither a Debian
+    # source name nor a version may contain '_', so the first '_' separates
+    # them unambiguously.
     base=${fname%_source.changes}
+    src=${base%%_*}
     version=${base#*_}
+
+    # The queue page is filtered by a substring of the package name, so it can
+    # also list uploads whose source merely contains <package> (e.g. "gcc" vs
+    # "gcc-defaults"). Only accept an exact source match.
+    if [ "$src" != "$package" ]; then
+        continue
+    fi
 
     if [ -n "$want_version" ] && [ "$version" != "$want_version" ]; then
         continue
