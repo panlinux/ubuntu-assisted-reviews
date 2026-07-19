@@ -226,6 +226,13 @@ superseding fix) is present. You may **corroborate** presence with the
 Launchpad bug tasks from `bug-info.sh` (a `Fix Released` series task is strong
 evidence), but still confirm against the actual change where practical.
 
+Start from the assumption that the checkout is up to date, but treat the
+versions reported by `rmadison-matrix.sh` as **authoritative**. If a
+`pkg/ubuntu/<release>-devel` branch disagrees with the matrix (e.g. the branch
+shows an older version than rmadison), the branch is stale — trust rmadison and
+confirm the fix against the archive source for that version (`pull-lp-source
+<SOURCE> <release>`) rather than the git branch.
+
 - **Check 8 (no co-dependent SRU):** PASS if this upload does not require
   another SRU to land simultaneously; FAIL if it depends on an unlanded SRU.
 - **Check 9 (fix in later releases):** PASS if the fix is present in **every
