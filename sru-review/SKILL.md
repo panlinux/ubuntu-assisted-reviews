@@ -18,22 +18,19 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 
 ### Helper scripts
 
-This skill ships helper scripts in the `scripts/` directory next to this file.
-They exist to do the mechanical, error-prone parts of the review the same way
-every time. **Prefer the script over reconstructing the commands yourself.** Run
-each script with no arguments (or the wrong ones) to see its usage.
-
-**Always run the scripts shipped with this skill.** The `scripts/` prefix used
-throughout this document refers to this skill's own directory. Set a variable to
-it once and invoke every helper through it:
+This skill ships helper scripts in the `scripts/` directory next to this file
+that do the mechanical, error-prone parts of the review the same way every time.
+**Prefer the scripts over reconstructing the commands yourself.** Set a variable
+to the skill's `scripts/` directory once and invoke every helper through it:
 
 ```bash
-SRU_SCRIPTS="<base directory of this skill>/scripts"   # from the skill context
+SRU_SCRIPTS="<base directory of this skill>/scripts"
 "$SRU_SCRIPTS/gather-context.sh"
-``` Every script
-prints `KEY=value` lines or a small table that later steps consume. If a script
-fails, it prints a message on stderr and exits non-zero — fall back to the
-manual steps documented alongside each check.
+```
+
+Each script prints `KEY=value` lines or a small table for later steps. On
+failure it writes to stderr and exits non-zero — fall back to the manual steps
+alongside the affected check.
 
 | Script | Purpose | Feeds checks |
 |--------|---------|--------------|
@@ -44,12 +41,12 @@ manual steps documented alongside each check.
 | `bug-description.sh <bug> [<bug>...]` | Launchpad API: full bug description / SRU template text (avoids scraping truncated bug HTML) | 17, 19, 20 |
 | `phasing-status.sh <package>` | Classify phased-updates.ubuntu.com status as `none`/`ok`/`halted` for the package | 21 |
 
-**Batch the independent data-gathering scripts.** The scripts above have no
-data dependencies on each other once `SOURCE`/`VERSION`/`TARGET_SERIES`/`LP_BUGS`
-are known (from `gather-context.sh`). Issue `fetch-changes.sh`,
-`rmadison-matrix.sh`, `bug-info.sh`, `bug-description.sh`, and
-`phasing-status.sh` **in a single batched turn** rather than one at a time —
-each writes independent `KEY=value` / block output that later checks consume.
+**Batch the independent data-gathering scripts.** Once
+`SOURCE`/`VERSION`/`TARGET_SERIES`/`LP_BUGS` are known from
+`gather-context.sh`, the remaining scripts (`fetch-changes.sh`,
+`rmadison-matrix.sh`, `bug-info.sh`, `bug-description.sh`,
+`phasing-status.sh`) have no data dependencies on each other — run them in a
+single batched turn.
 
 ## Fetching web resources
 
@@ -70,11 +67,10 @@ If you receive an HTTP 5xx error, **retry up to 3 times** before treating it as 
 ## Workflow
 
 The workflow is grouped by **data source** so you gather each kind of evidence
-once: first set up and collect the shared facts, then run the checks that only
-need the local checkout, then the archive checks, then the Launchpad bug/test
-checks, then phasing, and finally emit the report. Each step lists the report
-**check number(s)** it satisfies; the numbering in the report template never
-changes, only the order in which you perform the work.
+once: set up and collect shared facts, then the local-checkout checks, then
+archive checks, then Launchpad bug/test checks, then phasing, then the report.
+Each step lists the report **check number(s)** it satisfies; the report
+numbering is stable — only the order of work differs.
 
 ### Stage A — Setup & context
 
@@ -88,11 +84,9 @@ ubuntu-distro-info --supported   # supported releases, includes devel
 ubuntu-distro-info --devel       # the current development release
 ```
 
-This list scopes the cross-release checks in Stage C. **Optional / often
-redundant:** `rmadison-matrix.sh` (Stage C) already prints the supported list
-and the devel release in its header (`# Supported releases:` / `# Devel
-release:`), so if you are running that script anyway you can read the list from
-there instead of invoking `distro-info` separately.
+This list scopes the cross-release checks in Stage C. If you are running
+`rmadison-matrix.sh` (Stage C) anyway, its header already prints the supported
+and devel releases, so you can read them from there instead.
 
 #### A2. Fetch the upload
 
@@ -138,11 +132,10 @@ scripts/gather-context.sh
 ```
 
 Record the printed `SOURCE`, `VERSION`, `TARGET_SERIES`, `LP_BUGS`,
-`QUEUE_TAGS`, and `BASELINE_REF`. These feed nearly every later check.
-`BASELINE_REF` is the git ref (normally `pkg/ubuntu/<series>-devel`) that Stage
-B diffs the upload against; the script emits it only when it resolves to a real
-object in the checkout. **Expected outcome:** a single top changelog stanza
-that references at least one `LP: #NNNN` bug.
+`QUEUE_TAGS`, and `BASELINE_REF` (the ref Stage B diffs against, normally
+`pkg/ubuntu/<series>-devel`; emitted only when it resolves in the checkout).
+These feed nearly every later check. **Expected outcome:** a single top
+changelog stanza referencing at least one `LP: #NNNN` bug.
 - **Check 1 (bug references in changelog):** PASS if `LP_BUGS` is non-empty;
   FAIL if the topmost stanza references no Launchpad bug.
 
@@ -158,12 +151,10 @@ scripts/fetch-changes.sh "<TARGET_SERIES>" "<SOURCE>" "<VERSION>"
 
 Record `CHANGES_FILE` and `LAUNCHPAD_BUGS_FIXED`.
 - **Check 3 (bug references in `source.changes`):** PASS if the bug numbers in
-  `LAUNCHPAD_BUGS_FIXED` match the `LP_BUGS` from A3; FAIL if they differ or the
-  `.changes` file omits a bug the changelog closes. Mark **N/A only** if the
-  upload legitimately closes no bug. Do **not** default this to N/A because the
-  file was hard to find — the script fetches it. If the script cannot find the
-  upload, browse `https://launchpad.net/ubuntu/<release>/+queue?queue_state=1`
-  manually before deciding.
+  `LAUNCHPAD_BUGS_FIXED` match `LP_BUGS` from A3; FAIL if they differ or the
+  `.changes` omits a bug the changelog closes. N/A only if the upload
+  legitimately closes no bug. If the script cannot find the upload, check
+  `https://launchpad.net/ubuntu/<release>/+queue?queue_state=1` before deciding.
 
 ### Stage B — Local checkout / diff checks
 
@@ -175,19 +166,18 @@ Inspect the upload diff (`git ubuntu` checkout). Diff the queue tag against the
 git --no-pager diff "$BASELINE_REF" "$QUEUE_TAGS"
 ```
 
-If `gather-context.sh` printed an empty `BASELINE_REF`, the conventional ref did
-not resolve in this checkout — fetch/verify it (e.g. `git rev-parse --verify
-pkg/ubuntu/<TARGET_SERIES>-devel`) before diffing. All of these checks are
-answered from the checkout alone.
+If `BASELINE_REF` is empty, the conventional ref did not resolve — verify it
+(e.g. `git rev-parse --verify pkg/ubuntu/<TARGET_SERIES>-devel`) before diffing.
+All of these checks are answered from the checkout alone.
 
 #### B1. Changes quality
 - **Check 4 (minimal change):** PASS if the diff is minimal and focused on the
   reported bug(s); FAIL if it contains substantial unrelated work.
 - **Check 5 (no unrelated changes):** PASS if every hunk maps to a bug fix
   named in the changelog; FAIL if unrelated files/lines are touched. Expected
-  Ubuntu packaging deltas — notably the `Maintainer`/`XSBC-Original-Maintainer`
-  update from `update-maintainer` (Check 14) — are fine and need not be
-  mentioned in the changelog, though there is no harm if they are.
+  Ubuntu packaging deltas (e.g. the `Maintainer`/`XSBC-Original-Maintainer`
+  update from `update-maintainer`, Check 14) are fine and need not be listed in
+  the changelog.
 - **Check 6 (DEP-3 patch format):** For every *new* file under `debian/patches/`,
   PASS if it carries DEP-3 headers (`Description`, `Origin`/`Author`, `Bug`,
   etc.); FAIL if a new patch lacks them. N/A if no new patches are added.
@@ -220,18 +210,13 @@ Confirm the fix has landed everywhere it must. Build the version matrix once:
 scripts/rmadison-matrix.sh "<SOURCE>"
 ```
 
-For each relevant release, compare its changelog/diff against this SRU (tag
-`pkg/ubuntu/<release>-devel`) to confirm the same fix (or an equivalent /
-superseding fix) is present. You may **corroborate** presence with the
-Launchpad bug tasks from `bug-info.sh` (a `Fix Released` series task is strong
-evidence), but still confirm against the actual change where practical.
-
-Start from the assumption that the checkout is up to date, but treat the
-versions reported by `rmadison-matrix.sh` as **authoritative**. If a
-`pkg/ubuntu/<release>-devel` branch disagrees with the matrix (e.g. the branch
-shows an older version than rmadison), the branch is stale — trust rmadison and
-confirm the fix against the archive source for that version (`pull-lp-source
-<SOURCE> <release>`) rather than the git branch.
+For each relevant release, confirm the same fix (or an equivalent/superseding
+fix) is present, comparing against the release's changelog/diff
+(`pkg/ubuntu/<release>-devel`). A `Fix Released` series task from `bug-info.sh`
+is strong corroborating evidence. Treat `rmadison-matrix.sh` versions as
+**authoritative**: if a `pkg/ubuntu/<release>-devel` branch shows an older
+version than the matrix, the branch is stale — trust rmadison and confirm
+against the archive source (`pull-lp-source <SOURCE> <release>`).
 
 - **Check 8 (no co-dependent SRU):** PASS if this upload does not require
   another SRU to land simultaneously; FAIL if it depends on an unlanded SRU.
@@ -239,11 +224,9 @@ confirm the fix against the archive source for that version (`pull-lp-source
   later supported release** shown in the matrix; FAIL if any later supported
   release lacks it.
 - **Check 10 (fix in devel release):** PASS if the fix is in the current devel
-  release. If it is present only in the devel `-proposed` pocket (matrix rows
-  marked `[DEVEL]` under `<devel>-proposed`) and has not yet migrated to the
-  release pocket, mark **⚠️ PASS (devel-proposed)** and note the pending
-  migration in the report Details. FAIL if the devel release lacks the fix
-  entirely.
+  release. If present only in the devel `-proposed` pocket (matrix rows marked
+  `[DEVEL]` under `<devel>-proposed`), mark **⚠️ PASS (devel-proposed)** and note
+  the pending migration in Details. FAIL if the devel release lacks it entirely.
 
 ### Stage D — Launchpad bug / test-plan checks
 
@@ -257,10 +240,8 @@ scripts/bug-description.sh <LP_BUGS>
 
 Use `bug-description.sh` output for the template/test-plan checks below — it
 returns the complete `[Impact]` / `[Test Plan]` / `[Where problems could occur]`
-text from the API. Do **not** scrape the bug's HTML page for this: the HTML
-`<meta description>` is truncated and will force a redundant second fetch. (You
-may still open the bug in the browser via `curl -sL` to read reviewer comments
-or attachments not in the description.)
+text from the API. (You may still open the bug via `curl -sL` to read reviewer
+comments or attachments not in the description.)
 
 - **Check 2 (bugs publicly accessible):** PASS if `bug-info.sh` reports
   `PRIVATE=false` for every bug; FAIL if any bug is private or unreachable.
@@ -290,13 +271,10 @@ or attachments not in the description.)
 ### Stage E — Archive automation
 
 - **Check 21 (phasing errors addressed):** Run `scripts/phasing-status.sh
-  <SOURCE>`. If it prints `PHASING=none`, the package is not currently phasing —
-  mark **N/A**. If `PHASING=ok`, it is phasing normally with no halt to
-  address — **N/A** (note it is in progress). If `PHASING=halted`, phasing was
-  stopped (0%): inspect the matching rows and PASS only if this upload addresses
-  the failure; FAIL if the regression is unaddressed. (The script wraps
-  <https://phased-updates.ubuntu.com/> with the required retries; pass an
-  optional second argument to point it at an alternate URL or snapshot.)
+  <SOURCE>`. `PHASING=none` → not phasing, **N/A**. `PHASING=ok` → phasing
+  normally, **N/A** (note it is in progress). `PHASING=halted` → phasing stopped
+  (0%): inspect the matching rows and PASS only if this upload addresses the
+  failure; FAIL if the regression is unaddressed.
 
 ### Stage F — Finalize
 
