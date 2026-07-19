@@ -51,10 +51,11 @@ page=$(fetch "$url") || die "could not fetch phasing page: $url"
 
 # Render the HTML table to text with lynx: each package row becomes a single
 # line (a wide -width avoids wrapping long rows), which is far more robust than
-# stripping tags by hand. Keep only rows mentioning the package as a whole word.
+# stripping tags by hand. Match the package as a complete, literal first field
+# so names such as "linux" do not also match "linux-meta".
 rows=$(printf '%s' "$page" \
     | lynx -dump -nolist -width=1000 -stdin 2>/dev/null \
-    | grep -wE "$package" \
+    | awk -v package="$package" '$1 == package' \
     | sed -e 's/^ *//' -e 's/ *$//' -e 's/  */ /g' \
     || true)
 
