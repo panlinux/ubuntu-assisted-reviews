@@ -72,9 +72,25 @@ This list scopes the cross-release checks in Stage C.
 
 #### A2. Fetch the upload
 
+The goal of this step is a git-ubuntu checkout that contains tags of the form
+`queue/<release>/unapproved/<hash>`. Both commands below are conditional — skip
+whichever the current directory already satisfies.
+
+**Clone** — only if you are not already inside a checkout. If the current
+directory is already a git-ubuntu checkout of the target package (it has a
+`debian/changelog` for that source and a `.git` directory), skip this and work
+in place:
+
 ```bash
 git ubuntu clone <source-package>
 cd <source-package>
+```
+
+**Queue sync** — only if the checkout does not already contain a queue tag.
+Check first, and run the sync only when the list is empty:
+
+```bash
+git tag -l 'queue/*/unapproved/*'   # if this prints nothing, sync:
 git ubuntu queue sync
 ```
 
