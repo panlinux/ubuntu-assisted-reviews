@@ -120,9 +120,18 @@ git ubuntu queue sync
 
 The resulting checkout contains tags of the form `queue/<release>/unapproved/<hash>`.
 
+**Check out the queue tag** before any other analysis and stay on it for the
+whole review.
+
+```bash
+git tag -l 'queue/*/unapproved/*'                 # pick the target tag
+git checkout queue/<release>/unapproved/<hash>     # detached HEAD is expected
+dpkg-parsechangelog -S Distribution                # sanity check: NOT unstable/UNRELEASED
+```
+
 #### A3. Gather context
 
-From inside the checkout:
+From inside the checkout (with the queue tag checked out, per A2):
 
 ```bash
 scripts/gather-context.sh
