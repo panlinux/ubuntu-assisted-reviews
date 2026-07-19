@@ -13,6 +13,8 @@ You are an experienced Ubuntu packager and SRU reviewer. Verify that the upload 
 - `rmadison` must be available for archive version checks (install via `devscripts`).
 - `distro-info` must be available to determine which Ubuntu releases are still supported (install via the `distro-info` package).
 - `jq` and `curl` must be available (used by the helper scripts).
+- `lynx` must be available (used by `phasing-status.sh` to render the phased
+  updates table to text).
 
 ### Helper scripts
 
@@ -230,11 +232,14 @@ or attachments not in the description.)
 
 ### Stage E — Archive automation
 
-- **Check 21 (phasing errors addressed):** Visit
-  <https://phased-updates.ubuntu.com/>. If phasing of this package was halted
-  due to errors, PASS only if this upload addresses the failure; FAIL if the
-  regression is unaddressed. N/A if the package is not currently phasing / was
-  never halted.
+- **Check 21 (phasing errors addressed):** Run `scripts/phasing-status.sh
+  <SOURCE>`. If it prints `PHASING=none`, the package is not currently phasing —
+  mark **N/A**. If `PHASING=ok`, it is phasing normally with no halt to
+  address — **N/A** (note it is in progress). If `PHASING=halted`, phasing was
+  stopped (0%): inspect the matching rows and PASS only if this upload addresses
+  the failure; FAIL if the regression is unaddressed. (The script wraps
+  <https://phased-updates.ubuntu.com/> with the required retries; pass an
+  optional second argument to point it at an alternate URL or snapshot.)
 
 ### Stage F — Finalize
 
