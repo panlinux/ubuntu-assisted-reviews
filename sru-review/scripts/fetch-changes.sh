@@ -29,6 +29,11 @@ die() { echo "fetch-changes: $*" >&2; exit 1; }
 release=$1
 package=$2
 want_version=${3:-}
+# .changes filenames carry the epoch-stripped version (e.g. "28.0.0-0ubuntu1.1",
+# never "2:28.0.0-0ubuntu1.1"), so drop a leading "<epoch>:" from the requested
+# version before matching. This lets callers pass the version verbatim from
+# gather-context.sh / dpkg-parsechangelog, which includes the epoch.
+want_version=${want_version#*:}
 
 queue_url="https://launchpad.net/ubuntu/${release}/+queue?queue_state=1&queue_text=${package}"
 
