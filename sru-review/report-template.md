@@ -4,10 +4,10 @@
 |-------|-------|
 | **Package** | `<source-package>` |
 | **Tag(s)** | `<queue-tag(s)>` |
-| **Reviewer** | <your identifier> |
 | **Agent** | <agent/CLI tool used, e.g. copilot, opencode> |
 | **Model** | <model name> |
 | **AIU spent** | <total AIU (credits) consumed by this review> |
+| **Time spent** | <wall-clock time taken to conduct this review, e.g. 12m> |
 | **Date** | <YYYY-MM-DD> |
 
 ## Summary
