@@ -358,9 +358,23 @@ The report skeleton lives in [`report-template.md`](report-template.md) next to
 this file. Read it once you reach this stage and fill it in: replace the
 `<...>` placeholders, set each check to `✅ PASS` / `❌ FAIL` / `— N/A`, and
 follow the HTML-comment instructions in the Details and Recommendation
-sections. The `Agent`, `Model`, and `Model version` header fields are
+sections. The `Agent`, `Model`, `Model version`, and `AIU spent` header fields are
 mandatory: identify the agent/CLI tool and the exact model (name and version)
-used to generate the report, so the review's provenance is recorded. The check
+used to generate the report, so the review's provenance is recorded, and
+record the total AIU (credits) the review consumed. Use whatever
+usage-reporting mechanism your agent/CLI provides (a usage/status command, a
+session-stats API, or a session database), and in Details state briefly how
+the figure was obtained. For example, in **GitHub Copilot CLI** the local
+session store tracks it:
+
+```sql
+SELECT SUM(total_nano_aiu)/1000000000.0 AS aiu_spent
+FROM assistant_usage_events
+WHERE session_id = '<current session id>';
+```
+
+If the running agent exposes no usage data at all, write `unavailable (no
+usage reporting in <agent>)` rather than inventing a number. The check
 numbers in the template are stable and map to the Stage steps above.
 
 Load the template like any other helper artifact:
