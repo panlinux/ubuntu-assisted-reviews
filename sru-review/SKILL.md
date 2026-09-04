@@ -313,8 +313,10 @@ The report skeleton lives in [`report-template.md`](report-template.md) next to
 this file. Read it once you reach this stage and fill it in: replace the
 `<...>` placeholders, set each check to `✅ PASS` / `❌ FAIL` / `— N/A`, and
 follow the HTML-comment instructions in the Details and Recommendation
-sections. The check numbers in the template are stable and map to the Stage
-steps above.
+sections. The `Agent`, `Model`, and `Model version` header fields are
+mandatory: identify the agent/CLI tool and the exact model (name and version)
+used to generate the report, so the review's provenance is recorded. The check
+numbers in the template are stable and map to the Stage steps above.
 
 Load the template like any other helper artifact:
 

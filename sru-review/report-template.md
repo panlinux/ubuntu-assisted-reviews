@@ -5,6 +5,9 @@
 | **Package** | `<source-package>` |
 | **Tag(s)** | `<queue-tag(s)>` |
 | **Reviewer** | <your identifier> |
+| **Agent** | <agent/CLI tool used, e.g. copilot, opencode> |
+| **Model** | <model name> |
+| **Model version** | <model version> |
 | **Date** | <YYYY-MM-DD> |
 
 ## Summary
