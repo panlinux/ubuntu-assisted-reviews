@@ -363,9 +363,8 @@ mandatory: identify the agent/CLI tool and the model
 used to generate the report, so the review's provenance is recorded, and
 record the total AIU (credits) the review consumed. Use whatever
 usage-reporting mechanism your agent/CLI provides (a usage/status command, a
-session-stats API, or a session database), and in Details state briefly how
-the figure was obtained. For example, in **GitHub Copilot CLI** the local
-session store tracks it:
+session-stats API, or a session database). For example, in **GitHub Copilot
+CLI** the local session store tracks it:
 
 ```sql
 SELECT SUM(total_nano_aiu)/1000000000.0 AS aiu_spent
