@@ -221,10 +221,15 @@ All of these checks are answered from the checkout alone.
 
 #### B4. Patch correctness
 
-Read every patch added or modified by the upload **in full** (each new/changed
-file under `debian/patches/`, or source hunks if the upload changes source
-directly). Do not just skim the diff for "minimal change" (Check 4) — reason
-about whether the patch is *correct*. For each patch, verify:
+Read every change added or modified by the upload **in full**: each
+new/changed file under `debian/patches/`, source hunks if the upload changes
+upstream source directly, **and packaging changes** — both Debian packaging
+(everything else under `debian/`, such as `control`, `rules`, `*.install`,
+`*.dirs`, `*.links`, `*.symbols`, maintainer scripts, `watch`, `copyright`)
+and upstream build/packaging files (e.g. `configure.ac`, `Makefile.am`,
+`CMakeLists.txt`, `setup.py`, man pages, `.pc/` metadata). Do not just skim
+the diff for "minimal change" (Check 4) — reason about whether each change is
+*correct*. For each patch or change, verify:
 
 - **It actually fixes the bug.** Trace the changed code path from the bug's
   symptom to the patched lines; confirm the fix addresses the root cause, not
@@ -256,13 +261,15 @@ Use `curl -sL` for upstream URLs (per **Fetching web resources**); for GitHub
 commits use the `.patch` URL form (e.g.
 `https://github.com/<org>/<repo>/commit/<sha>.patch`).
 
-- **Check 22 (patch correctness):** PASS if every added/modified patch
-  correctly fixes the named bug(s), introduces no regressions, new bugs, or
-  unjustified behavior changes, and is not missing later upstream correctness
-  fixes; FAIL if any of these problems are found. N/A only if the upload
-  changes no source code at all (pure packaging metadata). If a problem is
-  uncertain, mark the check FAIL-or-NEEDS-INFO and describe the specific
-  concern in Details rather than assuming correctness.
+- **Check 22 (patch and packaging correctness):** PASS if every
+  added/modified patch correctly fixes the named bug(s), every packaging
+  change (Debian packaging under `debian/` and upstream build/packaging
+  files) is correct and does what the changelog claims, the upload introduces
+  no regressions, new bugs, or unjustified behavior changes, and it is not
+  missing later upstream correctness fixes; FAIL if any of these problems are
+  found. N/A only if the upload changes nothing but the changelog entry
+  itself. If a problem is uncertain, mark the check FAIL-or-NEEDS-INFO and
+  describe the specific concern in Details rather than assuming correctness.
 
 ### Stage C — Archive / cross-release checks
 
