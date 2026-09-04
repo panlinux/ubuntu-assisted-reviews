@@ -219,6 +219,51 @@ All of these checks are answered from the checkout alone.
   works and the orig tarball matches; FAIL if not. N/A if no new upstream
   version is included.
 
+#### B4. Patch correctness
+
+Read every patch added or modified by the upload **in full** (each new/changed
+file under `debian/patches/`, or source hunks if the upload changes source
+directly). Do not just skim the diff for "minimal change" (Check 4) — reason
+about whether the patch is *correct*. For each patch, verify:
+
+- **It actually fixes the bug.** Trace the changed code path from the bug's
+  symptom to the patched lines; confirm the fix addresses the root cause, not
+  just the reported symptom.
+- **No regressions or behavior changes beyond intent.** Look for side effects
+  on adjacent code paths, changed defaults, altered output/ABI/API, changed
+  error handling, or behavior shifts for users who never hit the bug. Flag any
+  observable behavior change that is not justified by the bug and the SRU
+  template's "Where problems could occur" section.
+- **No new bugs.** Scrutinize the patch as new code: off-by-one errors,
+  inverted conditions, uninitialized/NULL-deref paths, resource leaks, double
+  frees, missing error checks, truncation, type/size mismatches, missing
+  synchronization, and broken fallbacks. Check that every modified call site
+  and every consumer of a changed function/structure still behaves correctly.
+- **Backports are faithful.** If the patch cites an upstream commit (`Origin:`
+  or `Bug:` header), fetch the upstream commit and compare: the backport must
+  preserve its semantics; any deviation must be justified by surrounding-code
+  differences in the older release, not by an incomplete or incorrect
+  adaptation.
+- **Upstream follow-ups.** Upstream may have corrected the original fix after
+  the patch was taken. Search the upstream repository/issue tracker (the
+  `Origin:`/`Bug:`/`Bug-Ubuntu:` headers and the upstream VCS history for the
+  touched files) for later commits that fix, revert, or amend the applied
+  patch. If the upstream fix was itself buggy and later corrected, the SRU
+  must include the correction — FAIL if it cherry-picks a fix upstream has
+  since revised, unless the later commits are clearly unrelated.
+
+Use `curl -sL` for upstream URLs (per **Fetching web resources**); for GitHub
+commits use the `.patch` URL form (e.g.
+`https://github.com/<org>/<repo>/commit/<sha>.patch`).
+
+- **Check 22 (patch correctness):** PASS if every added/modified patch
+  correctly fixes the named bug(s), introduces no regressions, new bugs, or
+  unjustified behavior changes, and is not missing later upstream correctness
+  fixes; FAIL if any of these problems are found. N/A only if the upload
+  changes no source code at all (pure packaging metadata). If a problem is
+  uncertain, mark the check FAIL-or-NEEDS-INFO and describe the specific
+  concern in Details rather than assuming correctness.
+
 ### Stage C — Archive / cross-release checks
 
 Confirm the fix has landed everywhere it must. Build the version matrix once:

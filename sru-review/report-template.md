@@ -39,6 +39,7 @@
 | 19 | Test plan covers usage | ✅ PASS / ❌ FAIL / — N/A |
 | 20 | Good user story in plan | ✅ PASS / ❌ FAIL / — N/A |
 | 21 | Phasing errors addressed | ✅ PASS / ❌ FAIL / — N/A |
+| 22 | Patch correctness (regressions, new bugs, upstream follow-ups) | ✅ PASS / ❌ FAIL / — N/A |
 
 ## Details
 
