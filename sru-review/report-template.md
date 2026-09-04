@@ -7,7 +7,6 @@
 | **Reviewer** | <your identifier> |
 | **Agent** | <agent/CLI tool used, e.g. copilot, opencode> |
 | **Model** | <model name> |
-| **Model version** | <model version> |
 | **AIU spent** | <total AIU (credits) consumed by this review> |
 | **Date** | <YYYY-MM-DD> |
 

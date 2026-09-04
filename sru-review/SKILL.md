@@ -358,8 +358,8 @@ The report skeleton lives in [`report-template.md`](report-template.md) next to
 this file. Read it once you reach this stage and fill it in: replace the
 `<...>` placeholders, set each check to `✅ PASS` / `❌ FAIL` / `— N/A`, and
 follow the HTML-comment instructions in the Details and Recommendation
-sections. The `Agent`, `Model`, `Model version`, and `AIU spent` header fields are
-mandatory: identify the agent/CLI tool and the exact model (name and version)
+sections. The `Agent`, `Model`, and `AIU spent` header fields are
+mandatory: identify the agent/CLI tool and the model
 used to generate the report, so the review's provenance is recorded, and
 record the total AIU (credits) the review consumed. Use whatever
 usage-reporting mechanism your agent/CLI provides (a usage/status command, a
